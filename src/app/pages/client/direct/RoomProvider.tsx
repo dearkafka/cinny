@@ -1,10 +1,13 @@
 import React, { ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
+import { Room } from 'matrix-js-sdk';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { IsDirectRoomProvider, RoomProvider } from '../../../hooks/useRoom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { JoinBeforeNavigate } from '../../../features/join-before-navigate';
 import { useDirectRooms } from './useDirectRooms';
+import { useRoomReady } from '../../../hooks/useRoomReady';
+import { RoomLoading } from '../../../components/RoomLoading';
 
 export function DirectRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();
@@ -20,7 +23,15 @@ export function DirectRouteRoomProvider({ children }: { children: ReactNode }) {
 
   return (
     <RoomProvider key={room.roomId} value={room}>
-      <IsDirectRoomProvider value>{children}</IsDirectRoomProvider>
+      <IsDirectRoomProvider value>
+        <RoomReadyGate room={room}>{children}</RoomReadyGate>
+      </IsDirectRoomProvider>
     </RoomProvider>
   );
+}
+
+function RoomReadyGate({ room, children }: { room: Room; children: ReactNode }) {
+  const ready = useRoomReady(room);
+  if (!ready) return <RoomLoading />;
+  return <>{children}</>;
 }
